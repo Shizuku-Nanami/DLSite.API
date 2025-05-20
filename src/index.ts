@@ -90,11 +90,22 @@ export default {
         const maker = b?.textContent?.trim() || "";
         const maker_link = b?.getAttribute("href") || "";
 
-        const c = row.querySelector(".work_price_parts .work_price_base"); // 价格
-        const price = c?.textContent?.trim() || "";
+        const c = row.querySelector(".maker_name .author");
+        const author = c?.textContent?.trim().split(/\s+/).join("||") || "";
 
-        const d = row.querySelector(".sales_date"); // 发布日期
-        const date = d?.textContent?.trim() || "";
+        const d = row.querySelector(".work_price_parts .work_price_base"); // 价格
+        const price = d?.textContent?.trim() || "";
+
+        const e = row.querySelector(".sales_date"); // 发布日期
+        const date = e?.textContent?.trim() || "";
+
+        const f = row.querySelector(".search_tag"); // 标签
+        const tags =
+          f?.textContent
+            ?.trim()
+            .split(/[\n\s]+/)
+            .filter((tag) => tag)
+            .join("||") || "";
 
         return {
           title,
@@ -102,8 +113,10 @@ export default {
           image,
           maker,
           maker_link,
+          author,
           price: price + "円",
           date,
+          tags,
         };
       });
       return new Response(JSON.stringify(searchResults), {
