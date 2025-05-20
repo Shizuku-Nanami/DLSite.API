@@ -107,6 +107,9 @@ export default {
             .filter((tag) => tag)
             .join("||") || "";
 
+        const g = row.querySelector(".work_text"); // 介绍
+        const text = g?.textContent?.trim() || "";
+
         return {
           title,
           link: link.startsWith("http") ? link : BASE_URL + link,
@@ -117,6 +120,7 @@ export default {
           price: price + "円",
           date,
           tags,
+          text,
         };
       });
       return new Response(JSON.stringify(searchResults), {
