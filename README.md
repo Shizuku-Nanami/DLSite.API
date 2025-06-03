@@ -48,8 +48,8 @@ POST https://your-worker.example/dlsite
 |image|图片链接|
 |maker|社团|
 |maker_link|社团链接|
-|author|一般为CV/或社团外联合作者类(大概)|
+|author|一般为CV/或社团外联合作者类 (大概) |
 |price|价钱|
 |date|贩卖日期|
-|tags|标签(||分隔,方便开发)|
+|tags|标签 (带分隔符号,方便开发) |
 |text|描述|
