@@ -42,7 +42,7 @@ export default {
         headers,
       });
     }
-    const { search, query, results, page } = body;
+    const { search, query, results, page, format } = body;
     if (!search || !query || !results || !page) {
       return new Response(JSON.stringify({ error: "Missing parameters" }), {
         status: 400,
@@ -71,65 +71,90 @@ export default {
         },
       });
       const html = await resp.text();
-      // 只提取结果表格的 HTML 片段以减少解析开销
-      const match = html.match(/<table class="work_1col_table n_worklist">[\s\S]*?<\/table>/);
-      if (!match) {
+      
+      // 如果请求原始HTML输出
+      if (format === "html") {
+        return new Response(html, {
+          status: 200,
+          headers: { ...headers, "Content-Type": "text/html; charset=utf-8" },
+        });
+      }
+      
+      // 默认JSON输出 - 优化版本，减少DOM操作
+      // 使用正则表达式提取关键信息，避免完整DOM解析
+      const productRegex = /data-list_item_product_id="([^"]+)"/g;
+      const searchResults = [];
+      
+      // 提取产品ID列表
+      const productIds = [...html.matchAll(productRegex)].map(match => match[1]);
+      
+      if (productIds.length === 0) {
         return new Response(JSON.stringify([]), { status: 200, headers });
       }
-      const snippet = match[0];
-      const { document } = parseHTML(snippet);
+
+      // 限制处理数量以避免资源超限
+      const maxResults = Math.min(productIds.length, parseInt(String(results)) || 30);
+      
+      // 使用轻量级HTML解析，只解析必要部分
+      const { document } = parseHTML(html);
       const table = document.querySelector(".work_1col_table.n_worklist");
+      
       if (!table) {
         return new Response(JSON.stringify([]), { status: 200, headers });
       }
-      const rows = Array.from(table.querySelectorAll("tr"));
-      const searchResults = rows.map((row: Element) => {
-        const a = row.querySelector(".work_name a"); // 作品名
-        const title = a?.textContent?.trim() || "";
-        const link = a?.getAttribute("href") || "";
 
-        const img = row.querySelector(".work_thumb img"); // 封面
-        const rawImg =
-          img?.getAttribute("data-src") || img?.getAttribute("src") || null;
-        const image = normalizeImageUrl(rawImg);
+      const rows = table.querySelectorAll("tr[data-list_item_product_id]");
+      
+      // 只处理限定数量的结果
+      for (let i = 0; i < Math.min(rows.length, maxResults); i++) {
+        const row = rows[i];
+        
+        try {
+          const a = row.querySelector(".work_name a");
+          const title = a?.textContent?.trim() || "";
+          const link = a?.getAttribute("href") || "";
 
-        const b = row.querySelector(".maker_name a"); // 制作者
-        const maker = b?.textContent?.trim() || "";
-        const maker_link = b?.getAttribute("href") || "";
+          const img = row.querySelector(".work_thumb img");
+          const rawImg = img?.getAttribute("data-src") || img?.getAttribute("src") || null;
+          const image = normalizeImageUrl(rawImg);
 
-        const c = row.querySelector(".maker_name .author");
-        const author = c?.textContent?.trim().split(/\s+/).join("||") || "";
+          const b = row.querySelector(".maker_name a");
+          const maker = b?.textContent?.trim() || "";
+          const maker_link = b?.getAttribute("href") || "";
 
-        const d = row.querySelector(".work_price_parts .work_price_base"); // 价格
-        const price = d?.textContent?.trim() || "";
+          const c = row.querySelector(".maker_name .author");
+          const author = c?.textContent?.trim().split(/\s+/).join("||") || "";
 
-        const e = row.querySelector(".sales_date"); // 发布日期
-        const date = e?.textContent?.trim() || "";
+          const d = row.querySelector(".work_price_parts .work_price_base");
+          const price = d?.textContent?.trim() || "";
 
-        const f = row.querySelector(".search_tag"); // 标签
-        const tags =
-          f?.textContent
-            ?.trim()
-            .split(/[\n\s]+/)
-            .filter((tag) => tag)
-            .join("||") || "";
+          const e = row.querySelector(".sales_date");
+          const date = e?.textContent?.trim() || "";
 
-        const g = row.querySelector(".work_text"); // 介绍
-        const text = g?.textContent?.trim() || "";
+          const f = row.querySelector(".search_tag");
+          const tags = f?.textContent?.trim().split(/[\n\s]+/).filter((tag) => tag).join("||") || "";
 
-        return {
-          title,
-          link: link.startsWith("http") ? link : BASE_URL + link,
-          image,
-          maker,
-          maker_link,
-          author,
-          price: price + "円",
-          date,
-          tags,
-          text,
-        };
-      });
+          const g = row.querySelector(".work_text");
+          const text = g?.textContent?.trim() || "";
+
+          searchResults.push({
+            title,
+            link: link.startsWith("http") ? link : BASE_URL + link,
+            image,
+            maker,
+            maker_link,
+            author,
+            price: price + "円",
+            date,
+            tags,
+            text,
+          });
+        } catch (error) {
+          // 跳过处理失败的行，继续处理下一行
+          console.error(`Error processing row ${i}:`, error);
+          continue;
+        }
+      }
       return new Response(JSON.stringify(searchResults), {
         status: 200,
         headers: { ...headers, "Content-Type": "application/json" },
