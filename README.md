@@ -20,10 +20,11 @@ POST https://your-worker.example/dlsite
 |search|是|string|选择搜索的类型(maniax/books/pro/appx/home/soft/app)|
 |query|是|string|需要搜索的文本|
 |results|是|int|输出的条目条数|
+|page|是|int|输出的页数|
 
 >application/json
 ```JSON
-{"search":"maniax","query":"ASMR","results":"100"}
+{"search":"maniax","query":"ASMR","results":"100","page":"1"}
 ```
 
 > 得到的结果

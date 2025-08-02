@@ -3,14 +3,14 @@ import { parseHTML } from "linkedom";
 const BASE_URL = "https://www.dlsite.com";
 const TEMPLATES: Record<string, string> = {
   maniax:
-    "/maniax/fsr/=/language/jp/sex_category[0]/male/keyword/{query}/work_category[0]/doujin/work_category[1]/books/work_category[2]/pc/work_category[3]/app/order[0]/trend/options_and_or/and/per_page/{results}/show_type/1/from/fs.header/?locale={lang}",
+    "/maniax/fsr/=/language/jp/sex_category[0]/male/keyword/{query}/work_category[0]/doujin/work_category[1]/books/work_category[2]/pc/work_category[3]/app/order[0]/trend/options_and_or/and/per_page/{results}/page/{page}/show_type/1/from/fs.header/?locale={lang}",
   books:
-    "/books/fsr/=/language/jp/sex_category[0]/male/keyword/{query}/work_category[0]/books/order[0]/trend/options_and_or/and/per_page/{results}/show_type/1/from/fs.header/?locale={lang}",
-  pro: "/pro/fsr/=/language/jp/sex_category[0]/male/keyword/{query}/work_category[0]/pc/order[0]/trend/options_and_or/and/per_page/{results}/show_type/1/from/fs.header/?locale={lang}",
-  appx: "/appx/fsr/=/language/jp/sex_category[0]/male/keyword/{query}/order[0]/trend/options_and_or/and/per_page/{results}/show_type/1/from/fs.header/?locale={lang}",
-  home: "/home/fsr/=/language/jp/keyword/{query}/age_category[0]/general/work_category[0]/doujin/work_category[1]/pc/work_category[2]/app/order[0]/trend/options_and_or/and/per_page/{results}/show_type/1/from/fs.header/?locale={lang}",
-  soft: "/soft/fsr/=/language/jp/keyword/{query}/age_category[0]/general/order[0]/trend/options_and_or/and/per_page/{results}/show_type/1/from/fs.header/?locale={lang}",
-  app: "/app/fsr/=/language/jp/keyword/{query}/age_category[0]/general/order[0]/trend/options_and_or/and/per_page/{results}/show_type/1/from/fs.header/?locale={lang}",
+    "/books/fsr/=/language/jp/sex_category[0]/male/keyword/{query}/work_category[0]/books/order[0]/trend/options_and_or/and/per_page/{results}/page/{page}/show_type/1/from/fs.header/?locale={lang}",
+  pro: "/pro/fsr/=/language/jp/sex_category[0]/male/keyword/{query}/work_category[0]/pc/order[0]/trend/options_and_or/and/per_page/{results}/page/{page}/show_type/1/from/fs.header/?locale={lang}",
+  appx: "/appx/fsr/=/language/jp/sex_category[0]/male/keyword/{query}/order[0]/trend/options_and_or/and/per_page/{results}/page/{page}/show_type/1/from/fs.header/?locale={lang}",
+  home: "/home/fsr/=/language/jp/keyword/{query}/age_category[0]/general/work_category[0]/doujin/work_category[1]/pc/work_category[2]/app/order[0]/trend/options_and_or/and/per_page/{results}/page/{page}/show_type/1/from/fs.header/?locale={lang}",
+  soft: "/soft/fsr/=/language/jp/keyword/{query}/age_category[0]/general/order[0]/trend/options_and_or/and/per_page/{results}/page/{page}/show_type/1/from/fs.header/?locale={lang}",
+  app: "/app/fsr/=/language/jp/keyword/{query}/age_category[0]/general/order[0]/trend/options_and_or/and/per_page/{results}/page/{page}/show_type/1/from/fs.header/?locale={lang}",
 };
 
 function normalizeImageUrl(url: string | null): string | null {
@@ -42,8 +42,8 @@ export default {
         headers,
       });
     }
-    const { search, query, results } = body;
-    if (!search || !query || !results) {
+    const { search, query, results, page } = body;
+    if (!search || !query || !results || !page) {
       return new Response(JSON.stringify({ error: "Missing parameters" }), {
         status: 400,
         headers,
@@ -61,6 +61,7 @@ export default {
     const urlPath = template
       .replace(/{query}/g, encodedQuery)
       .replace(/{results}/g, String(results))
+      .replace(/{page}/g, String(page))
       .replace(/{lang}/g, lang);
     const fullUrl = BASE_URL + urlPath;
     try {
