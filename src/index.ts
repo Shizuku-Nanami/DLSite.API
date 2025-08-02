@@ -71,7 +71,13 @@ export default {
         },
       });
       const html = await resp.text();
-      const { document } = parseHTML(html);
+      // 只提取结果表格的 HTML 片段以减少解析开销
+      const match = html.match(/<table class="work_1col_table n_worklist">[\s\S]*?<\/table>/);
+      if (!match) {
+        return new Response(JSON.stringify([]), { status: 200, headers });
+      }
+      const snippet = match[0];
+      const { document } = parseHTML(snippet);
       const table = document.querySelector(".work_1col_table.n_worklist");
       if (!table) {
         return new Response(JSON.stringify([]), { status: 200, headers });
