@@ -104,11 +104,16 @@ async function runTests() {
 
     if (apiResult.status === 200) {
       console.log(`   ✅ API 请求成功`);
-      if (apiResult.data.results && Array.isArray(apiResult.data.results)) {
-        console.log(`   📊 返回结果数: ${apiResult.data.results.length}`);
-        console.log(
-          `   ⏱️  处理时间: ${apiResult.data.metadata?.processingTime}ms`
-        );
+      if (Array.isArray(apiResult.data)) {
+        console.log(`   📊 返回结果数: ${apiResult.data.length}`);
+        console.log(`   🔄 响应格式: 直接数组`);
+        if (apiResult.data.length > 0) {
+          console.log(
+            `   📝 首个结果标题: ${apiResult.data[0].title || "无标题"}`
+          );
+        }
+      } else {
+        console.log(`   ⚠️  警告: 响应格式不是预期的数组`);
       }
     } else {
       console.log(`   ❌ API 请求失败`);

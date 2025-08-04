@@ -176,6 +176,24 @@ app.get("/docs", (req, res) => {
           results: 10,
           page: 1,
         },
+        response: {
+          format: "array",
+          description: "直接返回作品信息数组",
+          example: [
+            {
+              title: "作品标题",
+              link: "作品链接",
+              image: "作品图片URL",
+              maker: "制作商",
+              maker_link: "制作商链接",
+              author: "作者",
+              price: "价格",
+              date: "发布日期",
+              tags: "标签",
+              text: "作品描述",
+            },
+          ],
+        },
         curl_example: `curl -X POST ${req.protocol}://${req.get(
           "host"
         )}/dlsite \\
@@ -291,18 +309,8 @@ app.post("/dlsite", rateLimit, async (req, res) => {
     );
 
     if (productIds.length === 0) {
-      return res.json({
-        results: [],
-        metadata: {
-          query,
-          search,
-          page: parseInt(page),
-          requestedResults: maxResults,
-          actualResults: 0,
-          processingTime: Date.now() - startTime,
-          message: "未找到匹配的结果",
-        },
-      });
+      // 直接返回空数组，与Workers版本保持一致
+      return res.json([]);
     }
 
     // 解析 HTML
@@ -310,18 +318,8 @@ app.post("/dlsite", rateLimit, async (req, res) => {
     const table = document.querySelector(".work_1col_table.n_worklist");
 
     if (!table) {
-      return res.json({
-        results: [],
-        metadata: {
-          query,
-          search,
-          page: parseInt(page),
-          requestedResults: maxResults,
-          actualResults: 0,
-          processingTime: Date.now() - startTime,
-          message: "页面结构发生变化，未找到作品列表",
-        },
-      });
+      // 页面结构发生变化时也返回空数组，与Workers版本保持一致
+      return res.json([]);
     }
 
     const rows = table.querySelectorAll("tr[data-list_item_product_id]");
@@ -387,10 +385,8 @@ app.post("/dlsite", rateLimit, async (req, res) => {
       }
     }
 
-    // 返回结果
-    res.json({
-      results: searchResults,
-    });
+    // 返回结果 - 直接返回数组，与Workers版本保持一致
+    res.json(searchResults);
   } catch (error) {
     console.error("API Error:", error);
 
