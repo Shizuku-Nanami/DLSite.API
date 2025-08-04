@@ -10,11 +10,41 @@ const HOST = process.env.HOST || "0.0.0.0";
 // 中间件配置 - 注意顺序很重要！
 app.use(
   cors({
-    origin: process.env.ALLOWED_ORIGINS?.split(",") || "*",
-    methods: ["GET", "POST", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
+    origin: function (origin, callback) {
+      // 允许所有来源，包括没有origin的请求（如移动应用、Postman等）
+      callback(null, true);
+    },
+    methods: ["GET", "POST", "OPTIONS", "PUT", "DELETE"],
+    allowedHeaders: [
+      "Origin",
+      "X-Requested-With",
+      "Content-Type",
+      "Accept",
+      "Authorization",
+      "Cache-Control",
+    ],
+    credentials: true, // 允许发送cookies和凭据
+    optionsSuccessStatus: 200,
+    preflightContinue: false,
   })
 );
+
+// 额外的CORS头部处理中间件
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
+  if (origin) {
+    res.header("Access-Control-Allow-Origin", origin);
+  } else {
+    res.header("Access-Control-Allow-Origin", "*");
+  }
+  res.header("Access-Control-Allow-Credentials", "true");
+  res.header("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS");
+  res.header(
+    "Access-Control-Allow-Headers",
+    "Origin,X-Requested-With,Content-Type,Accept,Authorization,Cache-Control"
+  );
+  next();
+});
 
 // JSON 解析中间件 - 必须在路由之前
 app.use(
