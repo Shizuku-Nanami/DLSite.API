@@ -1,15 +1,32 @@
 {
-    "name": "dlsite-metadata-api",
+    "name": "dlsite-metadata-api-nodejs",
     "version": "1.0.0",
+    "description": "DLSite网页元数据抓取 - Node.js 独立版本",
+    "main": "index.js",
     "scripts": {
-        "dev": "wrangler dev",
-        "build": "wrangler build"
+        "start": "node index.js",
+        "dev": "nodemon index.js",
+        "test": "node test.js"
     },
     "dependencies": {
-        "linkedom": "^0.15.0"
+        "cors": "^2.8.5",
+        "dotenv": "^17.2.1",
+        "express": "^4.18.2",
+        "linkedom": "^0.15.0",
+        "node-fetch": "^3.3.2"
     },
     "devDependencies": {
-        "typescript": "^4.9.5",
-        "wrangler": "^4.14.4"
-    }
+        "nodemon": "^3.0.2"
+    },
+    "engines": {
+        "node": ">=16.0.0"
+    },
+    "keywords": [
+        "dlsite",
+        "metadata",
+        "scraping",
+        "api",
+        "nodejs",
+        "express"
+    ]
 }

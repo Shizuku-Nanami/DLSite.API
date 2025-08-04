@@ -1,4 +1,0 @@
-name = "dlsite-metadata-api"
-main = "src/index.ts"
-compatibility_date = "2025-05-14"
-type = "esm" 
