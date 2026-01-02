@@ -51,7 +51,7 @@ app.use(
 const BASE_URL = "https://www.dlsite.com";
 const TEMPLATES = {
   maniax:
-    "/maniax/fsr/=/language/jp/sex_category[0]/male/keyword/{query}/work_category[0]/doujin/work_category[1]/books/work_category[2]/pc/work_category[3]/app/order[0]/trend/options_and_or/and/per_page/{results}/page/{page}/show_type/1/from/fs.header/?locale={lang}",
+    "/maniax/fsr/=/language/jp/sex_category[0]/male/keyword/{query}/work_category[0]/doujin/work_category[1]/books/work_category[2]/pc/order/trend/options_and_or/and/per_page/{results}/JPN/page/{page}/NM/show_type/1/from/fs.header",
   books:
     "/books/fsr/=/language/jp/sex_category[0]/male/keyword/{query}/work_category[0]/books/order[0]/trend/options_and_or/and/per_page/{results}/page/{page}/show_type/1/from/fs.header/?locale={lang}",
   pro: "/pro/fsr/=/language/jp/sex_category[0]/male/keyword/{query}/work_category[0]/pc/order[0]/trend/options_and_or/and/per_page/{results}/page/{page}/show_type/1/from/fs.header/?locale={lang}",
@@ -170,12 +170,26 @@ app.get("/docs", (req, res) => {
             description: "返回格式 (json|html)",
             default: "json",
           },
+          exactMatch: {
+            type: "boolean",
+            required: false,
+            description: "是否只返回标题精确匹配的结果",
+            default: false,
+          },
+          debug: {
+            type: "boolean",
+            required: false,
+            description: "是否返回调试信息（包括请求的URL）",
+            default: false,
+          },
         },
         example: {
           search: "maniax",
           query: "ASMR",
           results: 10,
           page: 1,
+          exactMatch: false,
+          debug: false,
         },
         response: {
           format: "array",
@@ -222,7 +236,7 @@ app.post("/dlsite", rateLimit, async (req, res) => {
     }
 
     // 验证请求体参数
-    const { search, query, results, page, format } = req.body;
+    const { search, query, results, page, format, exactMatch, debug } = req.body;
 
     // 检查必需参数
     const missingParams = [];
@@ -268,6 +282,10 @@ app.post("/dlsite", rateLimit, async (req, res) => {
       .replace(/{page}/g, String(page))
       .replace(/{lang}/g, lang);
     const fullUrl = BASE_URL + urlPath;
+
+    // 在控制台打印请求的 URL（用于调试）
+    // console.log(`[搜索请求] ${search} | 关键词: ${query}`);
+    // console.log(`[请求URL] ${fullUrl}`);
 
     // 动态导入 node-fetch
     const fetch = (await import("node-fetch")).default;
@@ -386,8 +404,32 @@ app.post("/dlsite", rateLimit, async (req, res) => {
       }
     }
 
+    // 如果启用精确匹配，过滤结果
+    let filteredResults = searchResults;
+    if (exactMatch === true) {
+      filteredResults = searchResults.filter(
+        (item) => item.title === query
+      );
+    }
+
+    // 如果启用调试模式，返回包含URL的完整信息
+    if (debug === true) {
+      return res.json({
+        url: fullUrl,
+        query: query,
+        search: search,
+        page: page,
+        results: maxResults,
+        exactMatch: exactMatch || false,
+        totalFound: searchResults.length,
+        returned: filteredResults.length,
+        processingTime: Date.now() - startTime + "ms",
+        data: filteredResults,
+      });
+    }
+
     // 返回结果 - 直接返回数组，与Workers版本保持一致
-    res.json(searchResults);
+    res.json(filteredResults);
   } catch (error) {
     console.error("API Error:", error);
 
