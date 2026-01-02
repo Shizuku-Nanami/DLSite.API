@@ -15,6 +15,7 @@ const TEMPLATES: Record<string, string> = {
 
 function normalizeImageUrl(url: string | null): string | null {
   if (!url) return null;
+  url = url.trim(); // 去除URL前后的空白字符
   if (url.startsWith("//")) return "https:" + url;
   if (url.startsWith("/")) return BASE_URL + url;
   return url;
